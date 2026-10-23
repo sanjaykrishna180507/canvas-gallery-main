@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Canvas &amp; Culture – an online gallery of famous artworks.">
+    <title>Sign Up | Canvas &amp; Culture</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">Canvas &amp; Culture</a>
+        <nav>
+            <a href="index.html">Login</a>
+            <a href="signup.html" class="active">Sign Up</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="auth-box">
+            <h1>Create Account</h1>
+            <p class="auth-sub">Join Canvas &amp; Culture today.</p>
+            <form id="signupForm" novalidate>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password (min 6 characters)</label>
+                    <input type="password" id="password" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="confirm">Confirm Password</label>
+                    <input type="password" id="confirm" autocomplete="new-password">
+                </div>
+                <p class="form-msg" id="msg" role="alert"></p>
+                <button type="submit" class="btn auth-btn">Sign Up</button>
+            </form>
+            <p class="auth-alt">Already have an account? <a href="index.html">Login</a></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Canvas &amp; Culture Gallery. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById('signupForm');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm').value;
+            msg.className = 'form-msg error';
+
+            if (!name || !email || !password || !confirm) {
+                msg.textContent = 'All fields are required.';
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                msg.textContent = 'Please enter a valid email address.';
+                return;
+            }
+            if (password.length < 6) {
+                msg.textContent = 'Password must be at least 6 characters.';
+                return;
+            }
+            if (password !== confirm) {
+                msg.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            if (users.some(u => u.email === email)) {
+                msg.textContent = 'An account with this email already exists.';
+                return;
+            }
+
+            users.push({ name, email, password });
+            localStorage.setItem('users', JSON.stringify(users));
+            msg.className = 'form-msg success';
+            msg.textContent = 'Account created! Redirecting to login...';
+            setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+        });
+    </script>
+</body>
+</html>

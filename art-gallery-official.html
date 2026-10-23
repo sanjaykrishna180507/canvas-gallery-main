@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Canvas &amp; Culture – an online gallery of famous artworks.">
+    <title>Canvas &amp; Culture | Official Interactive Gallery</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+        .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem 0; }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-main);
+            width: 100%;
+            max-width: 300px;
+            outline: none;
+        }
+
+        .search-input:focus, .filter-btn:focus-visible, .close-btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-muted);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            max-width: 800px;
+            width: 100%;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .modal-img {
+            width: 100%;
+            height: 100%;
+            min-height: 280px;
+            object-fit: cover;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="art-gallery-official.html" class="logo">Canvas &amp; Culture</a>
+        <nav>
+            <a href="art-gallery-official.html" class="active">Home</a>
+            <a href="art-display.html">Art Display</a>
+            <a href="index.html">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="toolbar">
+            <label for="searchInput" class="sr-only">Search artworks</label>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search title or artist...">
+            <div class="filter-group">
+                <button class="filter-btn active" onclick="filterCategory('All')">All</button>
+                <button class="filter-btn" onclick="filterCategory('Post-Impressionism')">Post-Impressionism</button>
+                <button class="filter-btn" onclick="filterCategory('Renaissance')">Renaissance</button>
+                <button class="filter-btn" onclick="filterCategory('Surrealism')">Surrealism</button>
+                <button class="filter-btn" onclick="filterCategory('Portraiture')">Portraiture</button>
+                <button class="filter-btn" onclick="filterCategory('Expressionism')">Expressionism</button>
+            </div>
+        </div>
+
+        <section class="art-grid" id="artGrid"></section>
+    </main>
+
+    <div class="modal" id="artModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()" aria-label="Close details">&times;</button>
+            <img id="modalImg" class="modal-img" src="" alt="Art Detail">
+            <div class="modal-body">
+                <div>
+                    <h2 id="modalTitle"></h2>
+                    <p><strong>Artist:</strong> <span id="modalArtist"></span></p>
+                    <p><strong>Year:</strong> <span id="modalYear"></span></p>
+                    <p><strong>Category:</strong> <span id="modalCategory"></span></p>
+                    <p id="modalDesc" style="margin-top: 1rem; color: var(--text-muted);"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Canvas &amp; Culture Gallery. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const artworks = [
+            {
+                id: 1,
+                title: "The Starry Night",
+                artist: "Vincent van Gogh",
+                year: "1889",
+                category: "Post-Impressionism",
+                image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&amp;fit=crop&amp;w=600&amp;q=80",
+                description: "Painted from Van Gogh's asylum room in Saint-Rémy-de-Provence, depicting a sweeping night sky with swirling blue energy and glowing yellow stars over a quiet village."
+            },
+            {
+                id: 2,
+                title: "Mona Lisa",
+                artist: "Leonardo da Vinci",
+                year: "c. 1503–1519",
+                category: "Renaissance",
+                image: "https://images.unsplash.com/photo-1561214115-f2f134cc4912?auto=format&amp;fit=crop&amp;w=600&amp;q=80",
+                description: "A half-length portrait widely considered an Italian Renaissance masterpiece, famous for the subject's enigmatic expression and da Vinci's masterful sfumato technique."
+            },
+            {
+                id: 3,
+                title: "The Persistence of Memory",
+                artist: "Salvador Dalí",
+                year: "1931",
+                category: "Surrealism",
+                image: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&amp;fit=crop&amp;w=600&amp;q=80",
+                description: "Surrealist painting featuring melting pocket watches set in a calm landscape, exploring time and decay."
+            },
+            {
+                id: 4,
+                title: "Girl with a Pearl Earring",
+                artist: "Johannes Vermeer",
+                year: "1665",
+                category: "Baroque / Portraiture",
+                image: "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&amp;fit=crop&amp;w=600&amp;q=80",
+                description: "Dutch Golden Age painting capturing a young girl in an oriental turban with a luminous pearl earring, softly lit."
+            },
+            {
+                id: 5,
+                title: "The Scream",
+                artist: "Edvard Munch",
+                year: "1893",
+                category: "Expressionism",
+                image: "https://images.unsplash.com/photo-1578926375605-eaf7559b1458?auto=format&amp;fit=crop&amp;w=600&amp;q=80",
+                description: "Agonized figure set against a turbulent sky, symbolizing human anxiety and existential dread through vivid, expressive colors."
+            }
+        ];
+
+        let currentCategory = 'All';
+
+        function renderArtworks(items) {
+            const grid = document.getElementById('artGrid');
+            if (items.length === 0) {
+                grid.innerHTML = '<p class="empty-msg">No artworks match your search.</p>';
+                return;
+            }
+            grid.innerHTML = items.map(art => `
+                <article class="art-card">
+                    <img src="${art.image}" alt="${art.title}">
+                    <div class="art-card-body">
+                        <div>
+                            <h3>${art.title}</h3>
+                            <p>${art.artist}</p>
+                        </div>
+                        <button class="btn" onclick="openModal(${art.id})">View Details</button>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function filterCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === cat);
+            });
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = artworks.filter(art => {
+                const matchesCat = (currentCategory === 'All') || art.category.includes(currentCategory);
+                const matchesSearch = art.title.toLowerCase().includes(query) || art.artist.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
+            });
+            renderArtworks(filtered);
+        }
+
+        function openModal(id) {
+            const art = artworks.find(item => item.id === id);
+            if (!art) return;
+            document.getElementById('modalImg').src = art.image;
+            document.getElementById('modalImg').alt = art.title;
+            document.getElementById('modalTitle').innerText = art.title;
+            document.getElementById('modalArtist').innerText = art.artist;
+            document.getElementById('modalYear').innerText = art.year;
+            document.getElementById('modalCategory').innerText = art.category;
+            document.getElementById('modalDesc').innerText = art.description;
+            document.getElementById('artModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('artModal').classList.remove('active');
+        }
+
+        function closeModalOnBackdrop(e) {
+            if (e.target.id === 'artModal') {
+                closeModal();
+            }
+        }
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        renderArtworks(artworks);
+    </script>
+</body>
+</html>

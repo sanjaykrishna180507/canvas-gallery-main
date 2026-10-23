@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Canvas &amp; Culture – an online gallery of famous artworks.">
+    <title>Login | Canvas &amp; Culture</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">Canvas &amp; Culture</a>
+        <nav>
+            <a href="index.html" class="active">Login</a>
+            <a href="signup.html">Sign Up</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="auth-box">
+            <h1>Welcome Back</h1>
+            <p class="auth-sub">Log in to explore the gallery.</p>
+            <form id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" autocomplete="current-password">
+                </div>
+                <p class="form-msg" id="msg" role="alert"></p>
+                <button type="submit" class="btn auth-btn">Login</button>
+            </form>
+            <p class="auth-alt">Don't have an account? <a href="signup.html">Sign up</a></p>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Canvas &amp; Culture Gallery. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            msg.className = 'form-msg error';
+
+            if (!email || !password) {
+                msg.textContent = 'Please enter your email and password.';
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                msg.textContent = 'Invalid email or password. Please sign up first if you are new.';
+                return;
+            }
+
+            localStorage.setItem('currentUser', user.name);
+            msg.className = 'form-msg success';
+            msg.textContent = 'Login successful! Redirecting...';
+            setTimeout(() => { window.location.href = 'art-gallery-official.html'; }, 800);
+        });
+    </script>
+</body>
+</html>
